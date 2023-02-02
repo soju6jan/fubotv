@@ -69,7 +69,6 @@ class Fubotv:
         # master url
         url = data['streamUrls'][0]['url']
         res = requests.get(url, headers=cls.default_headers)
-        text = res.text
 
         # 고해상도 url 선택
         max_width = current_width = 0
