@@ -1,0 +1,7 @@
+title: "fuboTV"
+version: "1.0.0"
+package_name: "fubotv"
+developer: "soju6jan"
+description: "fuboTV"
+home: "https://github.com/flaskfarm/fubotv"
+more: "https://raw.githubusercontent.com/soju6jan/fubotv/main/README.md"

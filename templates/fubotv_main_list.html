@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div>
+  {{ macros.m_button_group([['list_refresh_load_btn', '새로고침']])}}
+  {{ macros.m_row_start('5') }}
+  {{ macros.m_row_end() }}
+
+
+  {{ macros.m_row_start('5') }}
+  {{ macros.m_row_end() }}
+<div id="list_div"></div>
+</div> <!--전체-->
+<form name="playform">
+  <input type="hidden" id="play_title" name="play_title">
+  <input type="hidden" id="play_source_src"  name="play_source_src">
+  <input type="hidden" id="play_source_type"  name="play_source_type">
+</form>
+
+<script type="text/javascript">
+var package_name = "{{arg['package_name'] }}";
+var sub = "{{arg['sub'] }}";
+var current_data = null;
+
+$(document).ready(function(){
+  hideMenuModule();
+  
+  globalSendCommand('broad_list', null, null, null, function(ret){
+    make_list(ret.ch_list);
+  });
+  make_list(null);
+});
+
+$("body").on('click', '#list_refresh_load_btn', function(e){
+  e.preventDefault();
+
+  globalSendCommand('broad_list', null, null, null, function(ret){
+    make_list(ret.ch_list);
+  });
+  make_list(null);
+});
+
+
+$("body").on('click', '#json_btn', function(e){
+  e.preventDefault();
+  showModal(current_data[$(this).data('idx')]);
+});
+
+
+$("body").on('click', '#play_btn', function(e){
+  e.preventDefault();
+  globalSendCommand('play_url', $(this).data('id'), null, null, function(ret){
+    if (ret.data == null) {
+      notify('에러', 'danger');
+      return;
+    }
+    var form = document.playform;
+    var url = '/videojs';
+    var popupWidth = 980;
+    var leftPos = screen.width - popupWidth;
+    window.open('', ret.data, "location=no, directories=no,resizable=no,status=no,toolbar=no,menubar=no,width=" + popupWidth + ", height=560, top=100, left=" + leftPos);
+    form.action = url;
+    form.method = "post";
+    form.target = ret.data;
+    $('#play_title').val($(this).data('name'));
+    $('#play_source_src').val(ret.data);
+    $('#play_source_type').val('application/x-mpegURL');
+    form.submit();
+  });
+});
+
+$("body").on('click', '#play_url_btn', function(e){
+  e.preventDefault();
+  globalSendCommand('play_url', $(this).data('id'),null, null, function(ret){
+    if (ret.data == null) {
+      notify('에러', 'danger');
+      return;
+    }
+    str = ret.data + '<br><br>';
+    tmp = j_button('globalCliboardBtn', '클립보드 복사', {'text':ret.data}, 'success');
+    tmp += j_button('globalOpenBtn', '새창에서 열기', {'url':ret.data}, 'success');
+    str += j_button_group(tmp);
+    showModal(str, ret.data.title, false);
+  });
+});
+
+
+function make_list(data) {
+  current_data = data;
+  str = '';
+  str = '<table id="result_table" class="table table-sm  tableRowHover "  ><thead class="thead-dark"><tr> \
+    <th style="width:5%; text-align:center;">IDX</th> \
+    <th style="width:20%; text-align:left;">Logo</th> \
+    <th style="width:20%; text-align:left;">채널</th> \
+    <th style="width:40%; text-align:left;">NOW</th> \
+    <th style="width:15%; text-align:center;">Action</th> \
+    </tr></thead><tbody id="list">';
+  
+  count = 0;
+  if (data == null) {
+    str += '<tr><td colspan="6"><h4>로딩중..</h4></td></tr>';
+  } else {
+    for(i in data) {
+      str += '<tr class="chover" style="cursor: pointer;" data-toggle="collapse" data-target="#collapse_' + i + '" aria-expanded="true" >';
+      str += '<td style="width:5%; text-align:center;">'+(parseInt(i)+1)+'</td>';
+      str += '<td scope="col" style="width:20%; text-align:left;"><img src="'+ data[i].logo + '" class="img-fluid rounded"></td>';
+      str += '<td scope="col" style="width:20%; text-align:left;">'+ data[i].name + '</td>';
+      str += '<td scope="col" style="width:40%; text-align:left;">'+ data[i].current + '</td>';
+      buttons = '';
+      buttons += j_button('play_btn', 'PLAY', {'id':data[i].id, 'name':data[i].name}, 'success', false, true);
+      buttons += j_button('play_url_btn', 'URL', {'id':data[i].id}, 'info', false, true);
+      buttons = j_button_group(buttons);
+      str += '<td scope="col" style="width:15%; text-align:center;">' + buttons + '</td>';
+      str += '</tr>';
+      count++;
+    }
+    if (count == 0) str += '<tr><td colspan="6"><h4>데이터가 없습니다.</h4></td></tr>';
+  }
+  str += '</table>';
+  $("#list_div").html(str);
+  return
+}
+
+</script>    
+{% endblock %}
